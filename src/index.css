@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paysafe-blue: #1236B8;
+  --color-paysafe-blue-dark: #0E2D9A;
+  --color-paysafe-light: #E0F2FE;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html, body {
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Floating animations for decorative elements */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(var(--float-base-rotate, 0deg)); }
+  50% { transform: translateY(-14px) rotate(calc(var(--float-base-rotate, 0deg) + 6deg)); }
+}
+
+@keyframes float-medium {
+  0%, 100% { transform: translateY(0) rotate(var(--float-base-rotate, 0deg)); }
+  50% { transform: translateY(-20px) rotate(calc(var(--float-base-rotate, 0deg) - 8deg)); }
+}
+
+@keyframes float-fast {
+  0%, 100% { transform: translateY(0) rotate(var(--float-base-rotate, 0deg)); }
+  50% { transform: translateY(-10px) rotate(calc(var(--float-base-rotate, 0deg) + 10deg)); }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0) rotate(var(--float-base-rotate, 0deg)); }
+  50% { transform: translateY(-8px) rotate(calc(var(--float-base-rotate, 0deg) + 4deg)); }
+}
+
+.animate-float-slow { animation: float-slow 7s ease-in-out infinite; }
+.animate-float-medium { animation: float-medium 5.5s ease-in-out infinite; }
+.animate-float-fast { animation: float-fast 4s ease-in-out infinite; }
+.animate-float-gentle { animation: float-gentle 9s ease-in-out infinite; }

