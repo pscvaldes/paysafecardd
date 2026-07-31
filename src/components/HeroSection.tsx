@@ -240,9 +240,9 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
           top: "8px",
           right: "8px",
           transform: "rotate(18deg)",
-          filter: "drop-shadow(0 4px 8px rgba(255,255,255,0.1)) brightness(1.6)",
+          filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.3))",
           zIndex: 2,
-          opacity: 0.35,
+          opacity: 0.9,
         }}
       />
 
@@ -257,9 +257,9 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
           bottom: "12px",
           left: "5%",
           transform: "rotate(-24deg)",
-          filter: "drop-shadow(0 4px 8px rgba(255,255,255,0.1)) brightness(1.6)",
+          filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.3))",
           zIndex: 2,
-          opacity: 0.3,
+          opacity: 0.85,
         }}
       />
 
@@ -274,9 +274,9 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
           bottom: "-10px",
           right: "10%",
           transform: "rotate(-28deg)",
-          filter: "drop-shadow(0 4px 8px rgba(255,255,255,0.1)) brightness(1.6)",
+          filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.3))",
           zIndex: 2,
-          opacity: 0.28,
+          opacity: 0.85,
         }}
       />
 
