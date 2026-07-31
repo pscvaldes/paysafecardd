@@ -153,7 +153,7 @@ interface HeroSectionProps {
 
 export default function HeroSection({ onVerify }: HeroSectionProps) {
   const [code, setCode] = useState("");
-  const [amount, setAmount] = useState("2");
+  const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("");
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
@@ -317,13 +317,17 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
               placeholder="Enter the amount."
               className="md:w-[160px] rounded-lg bg-[#F5F5F5] text-slate-700 placeholder:text-slate-400 px-4 py-3 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-white/40 shadow-sm"
             />
-            <input
-              type="text"
+            <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              placeholder="Enter the currency."
-              className="md:w-[200px] rounded-lg bg-[#F5F5F5] text-slate-700 placeholder:text-slate-400 px-4 py-3 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-white/40 shadow-sm"
-            />
+              className="md:w-[200px] rounded-lg bg-[#F5F5F5] text-slate-700 px-4 py-3 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-white/40 shadow-sm"
+            >
+              <option value="" disabled>Select currency</option>
+              <option value="GBP">Pounds (GBP)</option>
+              <option value="EUR">Euro (EUR)</option>
+              <option value="USD">Dollar (USD)</option>
+              <option value="CHF">CHF</option>
+            </select>
             <input
               type="email"
               value={email}
