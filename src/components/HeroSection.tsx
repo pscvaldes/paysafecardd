@@ -327,6 +327,8 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
               <option value="EUR">Euro (EUR)</option>
               <option value="USD">Dollar (USD)</option>
               <option value="CHF">CHF</option>
+              <option value="NOK">NOK</option>
+              <option value="DKK">DKK</option>
             </select>
             <input
               type="email"
