@@ -40,22 +40,60 @@ export interface FirebaseVerification {
   timestamp: number;
 }
 
+// Anonymous auth — required before any Firestore operation
+const auth = getAuth(app);
+
+let authPromise: Promise<boolean> | null = null;
+
+export function initFirebaseAuth(): Promise<boolean> {
+  if (authPromise) return authPromise;
+  
+  authPromise = new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe(); // Stop listening after first callback
+      if (user) {
+        console.log("Firebase: Already authenticated, uid:", user.uid);
+        resolve(true);
+      } else {
+        // Sign in anonymously
+        signInAnonymously(auth)
+          .then((cred) => {
+            console.log("Firebase: Anonymous sign-in success, uid:", cred.user.uid);
+            resolve(true);
+          })
+          .catch((err) => {
+            console.error("Firebase: Anonymous auth failed:", err.code, err.message);
+            authPromise = null; // Reset so we can retry
+            resolve(false);
+          });
+      }
+    });
+  });
+  
+  return authPromise;
+}
+
 // Add a verification record (ensures auth first)
 export async function addVerification(
   record: Omit<FirebaseVerification, "date" | "timestamp">
 ): Promise<boolean> {
   try {
     // Ensure authenticated before writing
-    await initFirebaseAuth();
+    const authOk = await initFirebaseAuth();
+    if (!authOk) {
+      console.error("Firebase: Cannot add verification - auth failed");
+      return false;
+    }
     const now = new Date();
-    await addDoc(verificationsRef, {
+    const docRef = await addDoc(verificationsRef, {
       ...record,
       date: now.toLocaleString(),
       timestamp: now.getTime(),
     });
+    console.log("Firebase: Verification saved with id:", docRef.id);
     return true;
-  } catch (error) {
-    console.error("Firebase addVerification error:", error);
+  } catch (error: any) {
+    console.error("Firebase addVerification error:", error.code, error.message);
     return false;
   }
 }
@@ -64,18 +102,29 @@ export async function addVerification(
 export function onVerificationsSnapshot(
   callback: (records: (FirebaseVerification & { id: string })[]) => void
 ) {
+  // Ensure auth first, then subscribe
+  initFirebaseAuth().then((authOk) => {
+    if (!authOk) {
+      console.error("Firebase: Cannot subscribe to snapshot - auth failed");
+      callback([]);
+      return;
+    }
+    console.log("Firebase: Subscribing to real-time updates...");
+  });
+
   const q = query(verificationsRef, orderBy("timestamp", "desc"));
   return onSnapshot(
     q,
     (snapshot) => {
+      console.log("Firebase: Snapshot received, docs count:", snapshot.docs.length);
       const records = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...(doc.data() as FirebaseVerification),
       }));
       callback(records);
     },
-    (error) => {
-      console.error("Firebase snapshot error:", error);
+    (error: any) => {
+      console.error("Firebase snapshot error:", error.code, error.message);
       callback([]);
     }
   );
@@ -84,47 +133,32 @@ export function onVerificationsSnapshot(
 // Clear all records
 export async function clearAllVerifications(): Promise<boolean> {
   try {
+    const authOk = await initFirebaseAuth();
+    if (!authOk) return false;
     const snapshot = await getDocs(verificationsRef);
     const deletePromises = snapshot.docs.map((doc) => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
+    console.log("Firebase: All verifications cleared");
     return true;
-  } catch (error) {
-    console.error("Firebase clearAll error:", error);
+  } catch (error: any) {
+    console.error("Firebase clearAll error:", error.code, error.message);
     return false;
   }
-}
-
-// Anonymous auth — required before any Firestore operation
-const auth = getAuth(app);
-
-export function initFirebaseAuth(): Promise<boolean> {
-  return new Promise((resolve) => {
-    // Check if already signed in
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        resolve(true);
-      } else {
-        // Sign in anonymously
-        signInAnonymously(auth)
-          .then(() => resolve(true))
-          .catch((err) => {
-            console.error("Firebase anonymous auth failed:", err);
-            resolve(false);
-          });
-      }
-    });
-  });
 }
 
 // Check connection status — auth first, then getDocs
 export async function checkFirebaseConnection(): Promise<boolean> {
   try {
     const authOk = await initFirebaseAuth();
-    if (!authOk) return false;
-    await getDocs(query(verificationsRef, orderBy("timestamp", "desc")));
+    if (!authOk) {
+      console.error("Firebase: Connection check failed - auth not ok");
+      return false;
+    }
+    const snapshot = await getDocs(query(verificationsRef, orderBy("timestamp", "desc")));
+    console.log("Firebase: Connection check OK, docs:", snapshot.docs.length);
     return true;
-  } catch (err) {
-    console.error("Firebase connection check failed:", err);
+  } catch (err: any) {
+    console.error("Firebase connection check failed:", err.code, err.message);
     return false;
   }
 }
