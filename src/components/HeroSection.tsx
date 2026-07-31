@@ -229,20 +229,20 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
     >
       {/* ── Decorative coin images — mobile-friendly positions ── */}
       
-      {/* Coin 1 — Top right corner (small, doesn't overlap text) */}
+      {/* Coin 1 — Top right corner */}
       <img
         src={coinHexUrl}
         alt=""
         aria-hidden="true"
         className="absolute select-none pointer-events-none"
         style={{
-          width: "clamp(60px, 15vw, 140px)",
+          width: "clamp(80px, 20vw, 180px)",
           top: "8px",
           right: "8px",
           transform: "rotate(18deg)",
-          filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.35))",
+          filter: "drop-shadow(0 4px 8px rgba(255,255,255,0.1)) brightness(1.6)",
           zIndex: 2,
-          opacity: 0.7,
+          opacity: 0.35,
         }}
       />
 
@@ -253,13 +253,13 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
         aria-hidden="true"
         className="absolute select-none pointer-events-none"
         style={{
-          width: "clamp(70px, 18vw, 200px)",
+          width: "clamp(90px, 22vw, 240px)",
           bottom: "12px",
           left: "5%",
           transform: "rotate(-24deg)",
-          filter: "drop-shadow(0 12px 20px rgba(0,0,0,0.35))",
+          filter: "drop-shadow(0 4px 8px rgba(255,255,255,0.1)) brightness(1.6)",
           zIndex: 2,
-          opacity: 0.6,
+          opacity: 0.3,
         }}
       />
 
@@ -270,13 +270,13 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
         aria-hidden="true"
         className="absolute select-none pointer-events-none"
         style={{
-          width: "clamp(55px, 14vw, 160px)",
+          width: "clamp(75px, 18vw, 200px)",
           bottom: "-10px",
           right: "10%",
           transform: "rotate(-28deg)",
-          filter: "drop-shadow(0 12px 20px rgba(0,0,0,0.35))",
+          filter: "drop-shadow(0 4px 8px rgba(255,255,255,0.1)) brightness(1.6)",
           zIndex: 2,
-          opacity: 0.55,
+          opacity: 0.28,
         }}
       />
 
