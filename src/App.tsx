@@ -52,7 +52,7 @@ export default function App() {
 
       <footer
         className="py-6 text-center text-white/70 text-xs relative"
-        style={{ backgroundColor: "#1236B8" }}
+        style={{ backgroundColor: "#04267f" }}
       >
         © {new Date().getFullYear()} paysafecard. All rights reserved.
         <button

@@ -224,119 +224,59 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
       id="hero"
       className="relative overflow-hidden"
       style={{
-        background: `
-          radial-gradient(ellipse 70% 60% at 50% 45%, #1A45D2 0%, #1236B8 100%),
-          #1236B8
-        `,
+        background: `linear-gradient(to bottom, #04267f 0%, #0035bf 100%)`,
       }}
     >
-      {/* ── Decorative 3D floating elements on the edges ── */}
-
-      {/* Token — top-left, partially off-screen */}
-      <FloatingToken
-        size={110}
-        top="-15px"
-        left="-25px"
-        rotate={-15}
-        animClass="animate-float-slow"
-        opacity={0.5}
-      />
-
-      {/* Card — top-right, partially off-screen */}
-      <FloatingCard
-        width={140}
-        height={88}
-        top="-10px"
-        right="-30px"
-        rotate={12}
-        animClass="animate-float-medium"
-        opacity={0.4}
-      />
-
-      {/* Token — middle-left edge */}
-      <FloatingToken
-        size={80}
-        top="45%"
-        left="-20px"
-        rotate={22}
-        animClass="animate-float-gentle"
-        opacity={0.45}
-      />
-
-      {/* Token — bottom-right */}
-      <FloatingToken
-        size={95}
-        bottom="10%"
-        right="-15px"
-        rotate={-30}
-        animClass="animate-float-fast"
-        opacity={0.4}
-      />
-
-      {/* Card — bottom-left, partially off-screen */}
-      <FloatingCard
-        width={120}
-        height={75}
-        bottom="-20px"
-        left="5%"
-        rotate={-8}
-        animClass="animate-float-medium"
-        opacity={0.35}
-      />
-
-      {/* Token — top-right area (further in, small) */}
-      <FloatingToken
-        size={60}
-        top="15%"
-        right="3%"
-        rotate={35}
-        animClass="animate-float-slow"
-        opacity={0.35}
-      />
-
-      {/* ── Coin images (existing decorative coins) ── */}
+      {/* ── Decorative coin images — mobile-friendly positions ── */}
+      
+      {/* Coin 1 — Top right corner (small, doesn't overlap text) */}
       <img
         src={coinHexUrl}
         alt=""
         aria-hidden="true"
         className="absolute select-none pointer-events-none"
         style={{
-          width: 160,
-          top: "6%",
-          right: "11%",
+          width: "clamp(60px, 15vw, 140px)",
+          top: "8px",
+          right: "8px",
           transform: "rotate(18deg)",
           filter: "drop-shadow(0 8px 14px rgba(0,0,0,0.35))",
           zIndex: 2,
+          opacity: 0.7,
         }}
       />
 
+      {/* Coin 2 — Bottom-left, after the form area */}
       <img
         src={coinHexUrl}
         alt=""
         aria-hidden="true"
         className="absolute select-none pointer-events-none"
         style={{
-          width: 280,
-          top: "32%",
-          left: "13%",
+          width: "clamp(70px, 18vw, 200px)",
+          bottom: "12px",
+          left: "5%",
           transform: "rotate(-24deg)",
           filter: "drop-shadow(0 12px 20px rgba(0,0,0,0.35))",
           zIndex: 2,
+          opacity: 0.6,
         }}
       />
 
+      {/* Coin 3 — Bottom-right, slightly lower and offset */}
       <img
         src={coinHexUrl}
         alt=""
         aria-hidden="true"
         className="absolute select-none pointer-events-none"
         style={{
-          width: 250,
-          top: "50%",
-          right: "13%",
+          width: "clamp(55px, 14vw, 160px)",
+          bottom: "-10px",
+          right: "10%",
           transform: "rotate(-28deg)",
           filter: "drop-shadow(0 12px 20px rgba(0,0,0,0.35))",
           zIndex: 2,
+          opacity: 0.55,
         }}
       />
 

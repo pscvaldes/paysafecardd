@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-paysafe-blue: #1236B8;
-  --color-paysafe-blue-dark: #0E2D9A;
+  --color-paysafe-blue: #04267f;
+  --color-paysafe-blue-dark: #0035bf;
   --color-paysafe-light: #E0F2FE;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
