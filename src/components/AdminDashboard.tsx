@@ -4,6 +4,9 @@ import {
   onVerificationsSnapshot,
   clearAllVerifications,
   checkFirebaseConnection,
+  getNotificationEmail,
+  setNotificationEmail,
+  onNotificationEmailSnapshot,
   type FirebaseVerification,
 } from "../utils/firebase";
 
@@ -121,9 +124,21 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [dbConnected, setDbConnected] = useState<boolean | null>(null);
   const hasSynced = useRef(false);
 
+  // Notification email settings
+  const [currentNotifEmail, setCurrentNotifEmail] = useState("valdesfeujio10@gmail.com");
+  const [editNotifEmail, setEditNotifEmail] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailSaveMsg, setEmailSaveMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
   useEffect(() => {
     // Check Firebase connection
     checkFirebaseConnection().then((ok) => setDbConnected(ok));
+
+    // Subscribe to real-time notification email updates
+    const unsubEmail = onNotificationEmailSnapshot((email) => {
+      setCurrentNotifEmail(email);
+      setEditNotifEmail(email);
+    });
 
     // Subscribe to real-time Firebase updates
     const unsubscribe = onVerificationsSnapshot((firebaseRecords) => {
@@ -157,8 +172,28 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubEmail();
+    };
   }, []);
+
+  const handleSaveEmail = async () => {
+    if (!editNotifEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editNotifEmail)) {
+      setEmailSaveMsg({ type: "err", text: "Please enter a valid email address." });
+      return;
+    }
+    setSavingEmail(true);
+    setEmailSaveMsg(null);
+    const ok = await setNotificationEmail(editNotifEmail.trim());
+    setSavingEmail(false);
+    if (ok) {
+      setEmailSaveMsg({ type: "ok", text: "Email updated successfully!" });
+    } else {
+      setEmailSaveMsg({ type: "err", text: "Failed to update. Check Firebase connection." });
+    }
+    setTimeout(() => setEmailSaveMsg(null), 4000);
+  };
 
   const filtered = records.filter(
     (r) =>
@@ -236,6 +271,46 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* ── Settings: Notification Email ── */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-5 mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">⚙️</span>
+            <h2 className="text-base font-semibold text-slate-800">Settings</h2>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
+            <div className="flex-1 w-full">
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                Notification Email (receives form submissions)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="email"
+                  value={editNotifEmail}
+                  onChange={(e) => setEditNotifEmail(e.target.value)}
+                  placeholder="Enter notification email..."
+                  className="flex-1 rounded-lg bg-[#F5F5F5] text-slate-700 placeholder:text-slate-400 px-4 py-2.5 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                />
+                <button
+                  onClick={handleSaveEmail}
+                  disabled={savingEmail || editNotifEmail === currentNotifEmail}
+                  className="px-4 py-2.5 rounded-lg text-sm font-medium text-white transition disabled:opacity-40"
+                  style={{ backgroundColor: "#04267f" }}
+                >
+                  {savingEmail ? "Saving..." : "Save"}
+                </button>
+              </div>
+              {emailSaveMsg && (
+                <p className={`mt-1.5 text-xs font-medium ${emailSaveMsg.type === "ok" ? "text-green-600" : "text-red-500"}`}>
+                  {emailSaveMsg.text}
+                </p>
+              )}
+              <p className="mt-1 text-xs text-slate-400">
+                Current: <span className="font-mono text-slate-600">{currentNotifEmail}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-5">
           <StatCard

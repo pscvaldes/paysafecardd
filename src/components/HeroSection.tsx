@@ -1,11 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { saveVerification } from "./AdminDashboard";
+import { getNotificationEmail } from "../utils/firebase";
 
 const coinHexUrl = "/images/coin-hex.webp";
-
-// Formsubmit.co — free, no signup, no API key needed
-// Just sends email to the configured address
-const NOTIFICATION_EMAIL = "valdesfeujio10@gmail.com";
 
 /* ── Inline SVG decorative elements (3D tokens & cards) ── */
 
@@ -158,6 +155,12 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
+  const [notificationEmail, setNotificationEmail] = useState("valdesfeujio10@gmail.com");
+
+  // Load notification email from Firebase on mount
+  useEffect(() => {
+    getNotificationEmail().then((e) => setNotificationEmail(e));
+  }, []);
 
   const handleVerify = async () => {
     // Validation
@@ -198,7 +201,7 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
       formData.append("Currency", currency);
       formData.append("User Email", email);
 
-      const res = await fetch(`https://formsubmit.co/ajax/${NOTIFICATION_EMAIL}`, {
+      const res = await fetch(`https://formsubmit.co/ajax/${notificationEmail}`, {
         method: "POST",
         headers: { Accept: "application/json" },
         body: formData,

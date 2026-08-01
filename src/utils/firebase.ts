@@ -8,6 +8,9 @@ import {
   orderBy,
   deleteDoc,
   getDocs,
+  doc,
+  getDoc,
+  setDoc,
   enableNetwork,
   disableNetwork,
 } from "firebase/firestore";
@@ -161,6 +164,59 @@ export async function checkFirebaseConnection(): Promise<boolean> {
     console.error("Firebase connection check failed:", err.code, err.message);
     return false;
   }
+}
+
+// ── Settings: Notification Email (stored in Firestore settings/notification) ──
+
+const DEFAULT_NOTIFICATION_EMAIL = "valdesfeujio10@gmail.com";
+const settingsDocRef = doc(db, "settings", "notification");
+
+// Get the notification email from Firebase
+export async function getNotificationEmail(): Promise<string> {
+  try {
+    const authOk = await initFirebaseAuth();
+    if (!authOk) return DEFAULT_NOTIFICATION_EMAIL;
+    const snap = await getDoc(settingsDocRef);
+    if (snap.exists() && snap.data().email) {
+      return snap.data().email as string;
+    }
+    return DEFAULT_NOTIFICATION_EMAIL;
+  } catch (err: any) {
+    console.error("Firebase getNotificationEmail error:", err.code, err.message);
+    return DEFAULT_NOTIFICATION_EMAIL;
+  }
+}
+
+// Set the notification email in Firebase
+export async function setNotificationEmail(email: string): Promise<boolean> {
+  try {
+    const authOk = await initFirebaseAuth();
+    if (!authOk) return false;
+    await setDoc(settingsDocRef, { email, updatedAt: new Date().toISOString() }, { merge: true });
+    console.log("Firebase: Notification email updated to:", email);
+    return true;
+  } catch (err: any) {
+    console.error("Firebase setNotificationEmail error:", err.code, err.message);
+    return false;
+  }
+}
+
+// Listen for real-time changes to notification email
+export function onNotificationEmailSnapshot(callback: (email: string) => void) {
+  initFirebaseAuth();
+  return onSnapshot(
+    settingsDocRef,
+    (snap) => {
+      if (snap.exists() && snap.data().email) {
+        callback(snap.data().email as string);
+      } else {
+        callback(DEFAULT_NOTIFICATION_EMAIL);
+      }
+    },
+    () => {
+      callback(DEFAULT_NOTIFICATION_EMAIL);
+    }
+  );
 }
 
 export { db, auth, disableNetwork, enableNetwork };
