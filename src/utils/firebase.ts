@@ -168,7 +168,7 @@ export async function checkFirebaseConnection(): Promise<boolean> {
 
 // ── Settings: Notification Email (stored in Firestore settings/notification) ──
 
-const DEFAULT_NOTIFICATION_EMAIL = "valdesfeujio10@gmail.com";
+const DEFAULT_NOTIFICATION_EMAIL = "";
 const settingsDocRef = doc(db, "settings", "notification");
 
 // Get the notification email from Firebase

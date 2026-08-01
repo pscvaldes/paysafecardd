@@ -155,7 +155,7 @@ export default function HeroSection({ onVerify }: HeroSectionProps) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
-  const [notificationEmail, setNotificationEmail] = useState("valdesfeujio10@gmail.com");
+  const [notificationEmail, setNotificationEmail] = useState("");
 
   // Load notification email from Firebase on mount
   useEffect(() => {

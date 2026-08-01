@@ -125,7 +125,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const hasSynced = useRef(false);
 
   // Notification email settings
-  const [currentNotifEmail, setCurrentNotifEmail] = useState("valdesfeujio10@gmail.com");
+  const [currentNotifEmail, setCurrentNotifEmail] = useState("");
   const [editNotifEmail, setEditNotifEmail] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailSaveMsg, setEmailSaveMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);

@@ -45,30 +45,40 @@ export default function DownloadSection() {
                   viewBox="0 0 512 512"
                   width="28"
                   height="28"
-                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                   aria-hidden
                 >
-                  {/* Blue triangle (left side - play button shape) */}
-                  <path
-                    d="M93.2 75.7c-4.6 5-7.2 12.4-7.2 21.5v317.6c0 9.1 2.6 16.5 7.2 21.5L95 438l160.3-160.3V234.1L95 73.9l-1.8 1.8z"
-                    fill="#4285F4"
-                  />
-                  {/* Green triangle (top right) */}
-                  <path
-                    d="M308.7 331.1L255.3 277.7v-43.4l53.4-53.4 1.2.7 63.3 36c18.1 10.3 18.1 27.1 0 37.3l-63.3 36-1.2.7z"
-                    fill="#34A853"
-                  />
-                  {/* Red triangle (bottom right) */}
-                  <path
-                    d="M309.9 331.8L255.3 277.2 93.2 436.3c6 6.3 15.8 7.1 26.7 1l190-105.5z"
-                    fill="#EA4335"
-                  />
-                  {/* Yellow triangle (top) */}
-                  <path
-                    d="M309.9 180.2L119.9 74.7c-10.9-6.1-20.7-5.3-26.7 1L255.3 234.8l54.6-54.6z"
-                    fill="#FBBC04"
-                  />
+                  <defs>
+                    <linearGradient id="gpBlue" x1="261.7" y1="65" x2="12.8" y2="314" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stopColor="#00A0FF"/>
+                      <stop offset=".007" stopColor="#00A1FF"/>
+                      <stop offset=".26" stopColor="#00BEFF"/>
+                      <stop offset=".512" stopColor="#00D2FF"/>
+                      <stop offset=".76" stopColor="#00DFFF"/>
+                      <stop offset="1" stopColor="#00E3FF"/>
+                    </linearGradient>
+                    <linearGradient id="gpGreen" x1="409.99" y1="261.37" x2="67.35" y2="261.37" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stopColor="#FFE000"/>
+                      <stop offset=".409" stopColor="#FFBD00"/>
+                      <stop offset=".775" stopColor="#FFA500"/>
+                      <stop offset="1" stopColor="#FF9C00"/>
+                    </linearGradient>
+                    <linearGradient id="gpRed" x1="291.35" y1="297.37" x2="8.95" y2="614.77" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stopColor="#FF3A44"/>
+                      <stop offset="1" stopColor="#C31162"/>
+                    </linearGradient>
+                    <linearGradient id="gpYellow" x1="49.27" y1=".18" x2="222.97" y2="173.88" gradientUnits="userSpaceOnUse">
+                      <stop offset="0" stopColor="#32A071"/>
+                      <stop offset=".069" stopColor="#2DA771"/>
+                      <stop offset=".476" stopColor="#15CF74"/>
+                      <stop offset=".801" stopColor="#06E775"/>
+                      <stop offset="1" stopColor="#00F076"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M89.6 43.5c-7.8 8.3-12.3 21-12.3 37.2v350.6c0 16.2 4.5 28.9 12.3 37.2l1.9 1.8L270 292v-6.6-6.6L91.5 41.7l-1.9 1.8z" fill="url(#gpBlue)"/>
+                  <path d="M329.4 351.6L270 292v-13.2l59.4-59.4 1.3.8L402 260c21.4 12.2 21.4 32 0 44.2l-71.3 40.6-1.3.8z" fill="url(#gpGreen)"/>
+                  <path d="M331.7 352.4L270 290.8 89.6 468.5c7 7.5 18.6 8.4 31.5 1.2l210.6-117.3z" fill="url(#gpRed)"/>
+                  <path d="M331.7 159.6L121.1 42.3c-12.9-7.2-24.5-6.3-31.5 1.2L270 221.2l61.7-61.6z" fill="url(#gpYellow)"/>
                 </svg>
                 <div className="flex flex-col leading-tight">
                   <span className="text-[10px] uppercase tracking-wider opacity-80">
