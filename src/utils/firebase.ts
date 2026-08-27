@@ -260,27 +260,37 @@ export async function setWebappDisabled(disabled: boolean): Promise<boolean> {
 }
 
 // Listen for real-time changes to webapp disabled status
+// Returns an unsubscribe function. Auth is awaited BEFORE subscribing.
 export function onWebappDisabledSnapshot(callback: (disabled: boolean) => void) {
+  let unsubSnap: (() => void) | null = null;
+
   initFirebaseAuth().then((authOk) => {
     if (!authOk) {
-      console.warn("Firebase: Auth failed for webapp status — defaulting to enabled");
-      callback(false);
+      console.warn("Firebase: Auth failed for webapp status — defaulting to maintenance");
+      callback(true); // fail-safe: show maintenance if auth fails
+      return;
     }
-  });
-  return onSnapshot(
-    webappDocRef,
-    (snap) => {
-      if (snap.exists() && typeof snap.data().disabled === "boolean") {
-        callback(snap.data().disabled as boolean);
-      } else {
-        callback(false);
+    // Only subscribe AFTER auth is confirmed
+    unsubSnap = onSnapshot(
+      webappDocRef,
+      (snap) => {
+        if (snap.exists() && typeof snap.data().disabled === "boolean") {
+          callback(snap.data().disabled as boolean);
+        } else {
+          callback(false);
+        }
+      },
+      (error) => {
+        console.error("Firebase webapp snapshot error:", error);
+        callback(true); // fail-safe: show maintenance on error
       }
-    },
-    (error) => {
-      console.error("Firebase webapp snapshot error:", error);
-      callback(false);
-    }
-  );
+    );
+  });
+
+  // Return unsubscribe function
+  return () => {
+    if (unsubSnap) unsubSnap();
+  };
 }
 
 export { db, auth, disableNetwork, enableNetwork };

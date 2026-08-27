@@ -21,13 +21,13 @@ export default function App() {
       setWebappDisabled(disabled);
     });
 
-    // Safety timeout: if Firebase doesn't respond within 5s, show the app anyway
+    // Safety timeout: if Firebase doesn't respond within 8s, show maintenance by default
     const timeout = setTimeout(() => {
       if (!received) {
-        console.warn("Firebase timeout — showing app by default");
-        setWebappDisabled(false);
+        console.warn("Firebase timeout — showing maintenance by default");
+        setWebappDisabled(true);
       }
-    }, 5000);
+    }, 8000);
 
     return () => {
       unsub();
