@@ -4,9 +4,10 @@ import {
   onVerificationsSnapshot,
   clearAllVerifications,
   checkFirebaseConnection,
-  getNotificationEmail,
   setNotificationEmail,
   onNotificationEmailSnapshot,
+  setWebappDisabled,
+  onWebappDisabledSnapshot,
   type FirebaseVerification,
 } from "../utils/firebase";
 
@@ -130,6 +131,10 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
   const [savingEmail, setSavingEmail] = useState(false);
   const [emailSaveMsg, setEmailSaveMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
+  // Webapp disabled toggle
+  const [isWebappDisabled, setIsWebappDisabled] = useState(false);
+  const [togglingWebapp, setTogglingWebapp] = useState(false);
+
   useEffect(() => {
     // Check Firebase connection
     checkFirebaseConnection().then((ok) => setDbConnected(ok));
@@ -138,6 +143,11 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     const unsubEmail = onNotificationEmailSnapshot((email) => {
       setCurrentNotifEmail(email);
       setEditNotifEmail(email);
+    });
+
+    // Subscribe to real-time webapp disabled status
+    const unsubWebapp = onWebappDisabledSnapshot((disabled) => {
+      setIsWebappDisabled(disabled);
     });
 
     // Subscribe to real-time Firebase updates
@@ -175,6 +185,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
     return () => {
       unsubscribe();
       unsubEmail();
+      unsubWebapp();
     };
   }, []);
 
@@ -193,6 +204,12 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       setEmailSaveMsg({ type: "err", text: "Failed to update. Check Firebase connection." });
     }
     setTimeout(() => setEmailSaveMsg(null), 4000);
+  };
+
+  const handleToggleWebapp = async () => {
+    setTogglingWebapp(true);
+    await setWebappDisabled(!isWebappDisabled);
+    setTogglingWebapp(false);
   };
 
   const filtered = records.filter(
@@ -309,6 +326,47 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
               </p>
             </div>
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-slate-100 my-5" />
+
+          {/* Disable Webapp Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-slate-500 mb-0.5">
+                Disable Webapp
+              </label>
+              <p className="text-xs text-slate-400">
+                When enabled, visitors will see a hosting payment error page instead of the app.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isWebappDisabled}
+              disabled={togglingWebapp}
+              onClick={handleToggleWebapp}
+              className="relative inline-flex h-7 w-[52px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-wait"
+              style={{
+                backgroundColor: isWebappDisabled ? "#DC2626" : "#D1D5DB",
+              }}
+            >
+              <span
+                className="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-300 ease-in-out"
+                style={{
+                  transform: isWebappDisabled ? "translateX(26px)" : "translateX(2px)",
+                }}
+              />
+            </button>
+          </div>
+          {isWebappDisabled && (
+            <div className="mt-3 flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2.5">
+              <span className="text-red-500 text-sm">⚠️</span>
+              <p className="text-xs font-medium text-red-600">
+                Webapp is currently disabled. Visitors see a maintenance page. Toggle off to restore access.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}

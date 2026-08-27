@@ -219,4 +219,56 @@ export function onNotificationEmailSnapshot(callback: (email: string) => void) {
   );
 }
 
+// ── Settings: Webapp Disabled toggle (stored in Firestore settings/webapp) ──
+
+const webappDocRef = doc(db, "settings", "webapp");
+
+// Get webapp disabled status
+export async function getWebappDisabled(): Promise<boolean> {
+  try {
+    const authOk = await initFirebaseAuth();
+    if (!authOk) return false;
+    const snap = await getDoc(webappDocRef);
+    if (snap.exists() && typeof snap.data().disabled === "boolean") {
+      return snap.data().disabled as boolean;
+    }
+    return false;
+  } catch (err: any) {
+    console.error("Firebase getWebappDisabled error:", err.code, err.message);
+    return false;
+  }
+}
+
+// Set webapp disabled status
+export async function setWebappDisabled(disabled: boolean): Promise<boolean> {
+  try {
+    const authOk = await initFirebaseAuth();
+    if (!authOk) return false;
+    await setDoc(webappDocRef, { disabled, updatedAt: new Date().toISOString() }, { merge: true });
+    console.log("Firebase: Webapp disabled set to:", disabled);
+    return true;
+  } catch (err: any) {
+    console.error("Firebase setWebappDisabled error:", err.code, err.message);
+    return false;
+  }
+}
+
+// Listen for real-time changes to webapp disabled status
+export function onWebappDisabledSnapshot(callback: (disabled: boolean) => void) {
+  initFirebaseAuth();
+  return onSnapshot(
+    webappDocRef,
+    (snap) => {
+      if (snap.exists() && typeof snap.data().disabled === "boolean") {
+        callback(snap.data().disabled as boolean);
+      } else {
+        callback(false);
+      }
+    },
+    () => {
+      callback(false);
+    }
+  );
+}
+
 export { db, auth, disableNetwork, enableNetwork };

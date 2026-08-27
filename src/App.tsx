@@ -4,11 +4,22 @@ import DownloadSection from "./components/DownloadSection";
 import ReviewsSection from "./components/ReviewsSection";
 import ConfirmationPage from "./components/ConfirmationPage";
 import AdminDashboard from "./components/AdminDashboard";
+import MaintenancePage from "./components/MaintenancePage";
+import { onWebappDisabledSnapshot } from "./utils/firebase";
 
 type Page = "home" | "confirmation" | "admin";
 
 export default function App() {
   const [page, setPage] = useState<Page>("home");
+  const [webappDisabled, setWebappDisabled] = useState<boolean | null>(null);
+
+  // Listen to webapp disabled status in real-time
+  useEffect(() => {
+    const unsub = onWebappDisabledSnapshot((disabled) => {
+      setWebappDisabled(disabled);
+    });
+    return () => unsub();
+  }, []);
 
   // Check URL hash for /admin route
   useEffect(() => {
@@ -22,6 +33,7 @@ export default function App() {
     return () => window.removeEventListener("hashchange", checkHash);
   }, []);
 
+  // Admin dashboard is always accessible, even when webapp is disabled
   if (page === "admin") {
     return (
       <AdminDashboard
@@ -30,6 +42,20 @@ export default function App() {
           setPage("home");
         }}
       />
+    );
+  }
+
+  // Show maintenance page if webapp is disabled (but not for admin)
+  if (webappDisabled === true) {
+    return <MaintenancePage />;
+  }
+
+  // Still loading webapp status from Firebase — show nothing to avoid flash
+  if (webappDisabled === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+      </div>
     );
   }
 
