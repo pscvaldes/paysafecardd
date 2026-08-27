@@ -61,7 +61,11 @@ export default function App() {
 
   // Show maintenance page if webapp is disabled (but not for admin)
   if (webappDisabled === true) {
-    return <MaintenancePage />;
+    return (
+      <MaintenancePage
+        onAdmin={() => { window.location.hash = "#/admin"; setPage("admin"); }}
+      />
+    );
   }
 
   // Still loading webapp status from Firebase — show nothing to avoid flash

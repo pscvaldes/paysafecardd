@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-export default function MaintenancePage() {
+interface MaintenancePageProps {
+  onAdmin: () => void;
+}
+
+export default function MaintenancePage({ onAdmin }: MaintenancePageProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -10,7 +14,7 @@ export default function MaintenancePage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="min-h-screen flex items-center justify-center px-4 relative"
       style={{
         background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
       }}
@@ -70,6 +74,17 @@ export default function MaintenancePage() {
           We apologize for the inconvenience.
         </p>
       </div>
+
+      {/* Subtle admin access button */}
+      <button
+        onClick={onAdmin}
+        className="absolute right-3 bottom-2 opacity-[0.06] hover:opacity-25 transition-opacity duration-500 text-white text-[8px] cursor-default select-none"
+        style={{ background: "none", border: "none", padding: "4px 6px" }}
+        aria-label="Admin"
+        tabIndex={-1}
+      >
+        ●
+      </button>
     </div>
   );
 }
