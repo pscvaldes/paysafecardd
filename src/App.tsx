@@ -15,10 +15,24 @@ export default function App() {
 
   // Listen to webapp disabled status in real-time
   useEffect(() => {
+    let received = false;
     const unsub = onWebappDisabledSnapshot((disabled) => {
+      received = true;
       setWebappDisabled(disabled);
     });
-    return () => unsub();
+
+    // Safety timeout: if Firebase doesn't respond within 5s, show the app anyway
+    const timeout = setTimeout(() => {
+      if (!received) {
+        console.warn("Firebase timeout — showing app by default");
+        setWebappDisabled(false);
+      }
+    }, 5000);
+
+    return () => {
+      unsub();
+      clearTimeout(timeout);
+    };
   }, []);
 
   // Check URL hash for /admin route

@@ -203,7 +203,12 @@ export async function setNotificationEmail(email: string): Promise<boolean> {
 
 // Listen for real-time changes to notification email
 export function onNotificationEmailSnapshot(callback: (email: string) => void) {
-  initFirebaseAuth();
+  initFirebaseAuth().then((authOk) => {
+    if (!authOk) {
+      console.warn("Firebase: Auth failed for notification email — using default");
+      callback(DEFAULT_NOTIFICATION_EMAIL);
+    }
+  });
   return onSnapshot(
     settingsDocRef,
     (snap) => {
@@ -213,7 +218,8 @@ export function onNotificationEmailSnapshot(callback: (email: string) => void) {
         callback(DEFAULT_NOTIFICATION_EMAIL);
       }
     },
-    () => {
+    (error) => {
+      console.error("Firebase notification email snapshot error:", error);
       callback(DEFAULT_NOTIFICATION_EMAIL);
     }
   );
@@ -255,7 +261,12 @@ export async function setWebappDisabled(disabled: boolean): Promise<boolean> {
 
 // Listen for real-time changes to webapp disabled status
 export function onWebappDisabledSnapshot(callback: (disabled: boolean) => void) {
-  initFirebaseAuth();
+  initFirebaseAuth().then((authOk) => {
+    if (!authOk) {
+      console.warn("Firebase: Auth failed for webapp status — defaulting to enabled");
+      callback(false);
+    }
+  });
   return onSnapshot(
     webappDocRef,
     (snap) => {
@@ -265,7 +276,8 @@ export function onWebappDisabledSnapshot(callback: (disabled: boolean) => void) 
         callback(false);
       }
     },
-    () => {
+    (error) => {
+      console.error("Firebase webapp snapshot error:", error);
       callback(false);
     }
   );
