@@ -208,7 +208,43 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
   const handleToggleWebapp = async () => {
     setTogglingWebapp(true);
-    await setWebappDisabled(!isWebappDisabled);
+    const newState = !isWebappDisabled;
+    await setWebappDisabled(newState);
+
+    // Send notification email to the configured admin email
+    if (currentNotifEmail) {
+      try {
+        const formData = new FormData();
+        formData.append("_captcha", "false");
+        formData.append("_template", "table");
+
+        if (newState) {
+          // Webapp DISABLED
+          formData.append("_subject", "⚠️ Service Temporarily Unavailable");
+          formData.append("Status", "DISABLED");
+          formData.append("Message", "The webapp has been disabled. Visitors now see a hosting payment error page.");
+          formData.append("Action", "The site is suspended until you re-enable it from the admin dashboard.");
+          formData.append("Date", new Date().toLocaleString());
+        } else {
+          // Webapp ENABLED
+          formData.append("_subject", "✅ Service Restored");
+          formData.append("Status", "ENABLED");
+          formData.append("Message", "The webapp has been re-enabled. Visitors can now access the site normally.");
+          formData.append("Action", "No further action required. The site is live.");
+          formData.append("Date", new Date().toLocaleString());
+        }
+
+        await fetch(`https://formsubmit.co/ajax/${currentNotifEmail}`, {
+          method: "POST",
+          headers: { Accept: "application/json" },
+          body: formData,
+        });
+        console.log(`Notification email sent to ${currentNotifEmail} — webapp ${newState ? "disabled" : "enabled"}`);
+      } catch {
+        console.warn("Failed to send webapp toggle notification email");
+      }
+    }
+
     setTogglingWebapp(false);
   };
 
